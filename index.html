@@ -1,0 +1,602 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Entre líneas: laboratorio de mensajes psicoeducativos basado en ENARES 2024. Enciende seis nodos y aprende a leer la red de creencias que normalizan la violencia contra las mujeres. Prototipo sujeto a validación.">
+<style>:root{color-scheme:light}[hidden]{display:none!important}img{max-width:100%}</style>
+<title>Entre líneas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,500;0,8..60,700;1,8..60,400&display=swap">
+<style>
+/* Layout: la red es la protagonista. Inicio oscuro con constelación y botón Iniciar; escenario de red donde cada tarjeta es un nodo que se enciende en orden; tarjeta en ventana al tocar un nodo; cierre verde "ahora sabemos leer entre líneas". */
+:root{
+  --bg:#F8F6F1; --surface:#FFFFFF; --ink:#1E1630; --muted:#5E5670; --line:#DDD6E8; --panel:#EFEAF4;
+  --brand:#2D1E47; --brand-soft:#CFC6E0;
+  --stage-a:#3A2765; --stage-b:#231638; --stage-c:#150D24; --stage-ink:#F1EDF7; --stage-mute:#B9AFD0;
+  --navy:#1B1464; --rust:#B5451B; --urban:#9A91AE;
+  --gold:#E69F00; --gold-tx:#7F5400; --gold-bg:#FBEFD5;
+  --blue:#56B4E9; --blue-tx:#15608F; --blue-bg:#DFF0FA;
+  --green:#009E73; --green-tx:#00694E; --green-bg:#D6F0E6; --win:#006B4F;
+  --focus:#1B1464;
+  --serif:'Source Serif 4',Georgia,'Times New Roman',serif;
+  --sans:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#150F1E; --surface:#211A2E; --ink:#F1EDF7; --muted:#B5ACC6; --line:#3B3151; --panel:#2A2139;
+  --navy:#B9B2F0; --rust:#E58A5E; --urban:#8C83A2;
+  --gold-tx:#F2B84B; --gold-bg:#3A2F14; --blue-tx:#7CC4F0; --blue-bg:#1A3446; --green-tx:#4DD0A8; --green-bg:#123A30;
+  --focus:#CFC6FF; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#150F1E; --surface:#211A2E; --ink:#F1EDF7; --muted:#B5ACC6; --line:#3B3151; --panel:#2A2139;
+  --navy:#B9B2F0; --rust:#E58A5E; --urban:#8C83A2;
+  --gold-tx:#F2B84B; --gold-bg:#3A2F14; --blue-tx:#7CC4F0; --blue-bg:#1A3446; --green-tx:#4DD0A8; --green-bg:#123A30;
+  --focus:#CFC6FF; color-scheme:dark}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.5}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px;border-radius:6px}
+.stagewrap :focus-visible,.hero :focus-visible,.topbar :focus-visible{outline-color:#fff}
+.gut{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1080px;margin:0 auto}
+[data-dim="tol"]{--d:var(--gold);--dt:var(--gold-tx);--db:var(--gold-bg)}
+[data-dim="cre"]{--d:var(--blue);--dt:var(--blue-tx);--db:var(--blue-bg)}
+[data-dim="act"]{--d:var(--green);--dt:var(--green-tx);--db:var(--green-bg)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;margin:0}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--ink);background:var(--surface);border-radius:12px;padding:10px 16px;font-size:15px;font-weight:600;min-height:46px}
+.btn:hover{background:var(--ink);color:var(--bg)}
+.btn.primary{background:var(--brand);color:#fff;border-color:var(--brand)}
+.btn.primary:hover{background:var(--navy);color:#fff;border-color:var(--navy)}
+.btn.ghost{border-color:var(--line)}
+.btn.go{background:#fff;color:#2D1E47;border-color:#fff;font-size:19px;padding:14px 30px;min-height:56px;border-radius:999px;box-shadow:0 0 0 0 rgba(255,255,255,.55);animation:glowbtn 2.4s ease-out infinite}
+.btn.go:hover{background:var(--gold);border-color:var(--gold);color:#1E1630}
+@keyframes glowbtn{0%{box-shadow:0 0 0 0 rgba(255,255,255,.5)}70%{box-shadow:0 0 0 18px rgba(255,255,255,0)}100%{box-shadow:0 0 0 0 rgba(255,255,255,0)}}
+.small{font-size:12.5px;color:var(--muted);margin:10px 0 0}
+
+/* Inicio */
+.hero{background:radial-gradient(120% 100% at 80% 0%,var(--stage-a) 0%,var(--stage-b) 55%,var(--stage-c) 100%);color:#fff;position:relative;overflow:hidden}
+.hero .wrap{padding-block:34px 56px;position:relative;z-index:1;min-height:min(560px,86vh);display:flex;flex-direction:column;justify-content:center}
+.hero .eyebrow{color:var(--brand-soft)}
+.hero h1{font-family:var(--serif);font-weight:700;font-size:clamp(54px,11vw,112px);line-height:.95;margin:16px 0 8px;letter-spacing:-.02em}
+.hero h1 em{font-style:italic;color:var(--gold)}
+.hero .tag{font-family:var(--serif);font-style:italic;font-size:clamp(22px,3.6vw,34px);line-height:1.2;margin:0;color:#F6F1FF;text-wrap:balance;max-width:20em}
+.hero p.sub{margin:14px 0 0;max-width:32em;font-size:clamp(16px,2.1vw,19px);color:#DCD3EE;text-wrap:pretty}
+.heroact{display:flex;flex-wrap:wrap;gap:16px 20px;align-items:center;margin-top:28px}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.4);font-size:13px;font-weight:600;color:#fff}
+.pill i{width:8px;height:8px;border-radius:50%;background:var(--gold)}
+#heroNet{position:absolute;inset:0;width:100%;height:100%}
+#heroNet .tw{animation:tw 3.6s ease-in-out infinite}
+@keyframes tw{0%,100%{opacity:.35}50%{opacity:1}}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:26px}
+@media (max-width:700px){.stats{grid-template-columns:minmax(0,1fr)}}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.stat b{font-family:var(--serif);font-size:40px;line-height:1;color:var(--dt);display:block}
+.stat span{display:block;margin-top:6px;font-size:14px;color:var(--muted)}
+.lead{font-family:var(--serif);font-weight:700;font-size:clamp(22px,3vw,30px);line-height:1.25;margin:26px 0 0;text-wrap:balance}
+.how{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:22px 0 0;padding:0;list-style:none}
+@media (max-width:760px){.how{grid-template-columns:minmax(0,1fr)}}
+.how li{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px 18px;display:grid;gap:6px}
+.how .n{width:34px;height:34px;border-radius:50%;background:var(--brand);color:#fff;display:grid;place-items:center;font-weight:700}
+.how b{font-size:17px}
+.how span.t{color:var(--muted);font-size:15px}
+.cta2{display:flex;justify-content:center;margin-top:26px}
+.cta2 .btn.go{background:var(--brand);color:#fff;border-color:var(--brand);animation:none}
+.cta2 .btn.go:hover{background:var(--navy);border-color:var(--navy);color:#fff}
+
+/* Barra superior */
+.topbar{background:var(--brand);color:#fff}
+.topbar .wrap{display:flex;align-items:center;gap:12px;padding-block:10px;flex-wrap:wrap}
+.topbar b{font-family:var(--serif);font-size:20px}
+.topbar .sp{flex:1}
+.topbar .btn{background:transparent;color:#fff;border-color:rgba(255,255,255,.45);min-height:40px;padding:6px 14px;font-size:14px}
+.topbar .btn:hover{background:#fff;color:var(--brand)}
+.prog{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--brand-soft)}
+.prog i{width:11px;height:11px;border-radius:50%;border:2px solid var(--brand-soft);display:block}
+.prog i.on{background:var(--gold);border-color:var(--gold);box-shadow:0 0 10px var(--gold)}
+
+/* Escenario de la red */
+.stagewrap{margin-top:16px}
+.netstage{position:relative;background:radial-gradient(120% 90% at 50% 0%,var(--stage-a) 0%,var(--stage-b) 55%,var(--stage-c) 100%);border-radius:22px;overflow:hidden;border:1px solid #43336A}
+.netstage .head{padding:16px 18px 0;color:var(--stage-ink)}
+.netstage .head h1{font-family:var(--serif);font-size:clamp(22px,3.4vw,30px);line-height:1.2;margin:0;text-wrap:balance}
+.netstage .head p{margin:4px 0 0;color:var(--stage-mute);font-size:15px}
+svg.net{display:block;width:100%;height:auto;max-height:80vh}
+.net .ghost{transition:fill .6s,opacity .6s}
+.net .gtw{animation:tw 4.2s ease-in-out infinite}
+.net .gedge{stroke:#fff;stroke-opacity:.09;stroke-width:1}
+.net .gedge.on{stroke-opacity:.38}
+.net .dseg{fill:none;stroke:#fff;stroke-opacity:.3;stroke-width:2.5;stroke-dasharray:1 9;stroke-linecap:round}
+.net .lit{fill:none;stroke:#fff;stroke-width:4;stroke-linecap:round;stroke-dasharray:1;filter:url(#glow)}
+.net .lit.fresh{animation:draw 1s ease-out both}
+@keyframes draw{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
+.net .real{fill:none;stroke:#fff;stroke-opacity:.14;stroke-width:9;stroke-linecap:round}
+.net .real.on{stroke-opacity:1;stroke:var(--gold);filter:url(#glow)}
+.net .wlabel{font:700 14px var(--sans);fill:var(--gold)}
+.net .node{outline:none}
+.net .node.act,.net .node.done{cursor:pointer}
+.net .node .main{stroke:#fff;stroke-width:3.5}
+.net .node.locked .main{opacity:.28}
+.net .node .halo{opacity:0}
+.net .node.act .halo,.net .node.done .halo{opacity:.3}
+.net .node.act .halo{animation:halo 1.6s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+@keyframes halo{0%,100%{transform:scale(1);opacity:.45}50%{transform:scale(1.55);opacity:.08}}
+.net .node .ring{fill:none;stroke:#fff;stroke-width:2.5;stroke-dasharray:6 6;opacity:0;transform-box:fill-box;transform-origin:center}
+.net .node.act .ring{opacity:1;animation:spin 9s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.net .node.fresh .main{animation:pop .6s cubic-bezier(.2,1.6,.4,1) both;transform-box:fill-box;transform-origin:center}
+@keyframes pop{from{transform:scale(.6)}to{transform:scale(1)}}
+.net .burst{fill:none;stroke:#fff;stroke-width:3;transform-box:fill-box;transform-origin:center;animation:burst 1.1s ease-out both}
+@keyframes burst{from{transform:scale(1);opacity:.9}to{transform:scale(3.4);opacity:0}}
+.net .num{font-family:var(--sans);font-weight:700;fill:#1E1630;pointer-events:none}
+.net .lbl{font:600 14px var(--sans);fill:#F1EDF7;pointer-events:none}
+.net .code{font:500 11.5px var(--sans);fill:#B9AFD0;pointer-events:none}
+.net .node.locked .lbl,.net .node.locked .code{fill:#9C92B3}
+.net .node:focus-visible .main{stroke:var(--gold);stroke-width:6}
+.guide{padding:0 18px 18px;color:var(--stage-ink);font-size:16px;font-weight:600;display:flex;align-items:center;gap:10px}
+.guide i{width:12px;height:12px;border-radius:50%;background:var(--gold);box-shadow:0 0 12px var(--gold);flex:none;animation:halo 1.6s ease-in-out infinite}
+
+/* Cierre verde */
+.win{margin-top:18px;background:var(--win);color:#fff;border-radius:22px;padding:28px 24px;position:relative;overflow:hidden;animation:winpop .7s cubic-bezier(.2,1.3,.4,1) both}
+@keyframes winpop{from{transform:scale(.94);opacity:0}to{transform:scale(1);opacity:1}}
+.win .eyebrow{color:#BDF2DE}
+.win h2{font-family:var(--serif);font-size:clamp(40px,7vw,64px);line-height:1;margin:8px 0 6px}
+.win .line{font-family:var(--serif);font-style:italic;font-size:clamp(24px,4vw,36px);line-height:1.2;margin:0}
+.win p.sup{max-width:36em;margin:14px 0 0;font-size:17px;color:#E4FAF1}
+.win .cta{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}
+.win .btn{background:#fff;color:var(--win);border-color:#fff}
+.win .btn:hover{background:#BDF2DE;color:#00402F;border-color:#BDF2DE}
+.win .btn.ghost{background:transparent;color:#fff;border-color:rgba(255,255,255,.6)}
+.win .btn.ghost:hover{background:#fff;color:var(--win)}
+.conf{position:absolute;top:-12px;width:9px;height:14px;border-radius:2px;animation:fall 2.6s ease-in both;pointer-events:none}
+@keyframes fall{to{transform:translateY(360px) rotate(540deg);opacity:0}}
+.recap{list-style:none;padding:0;margin:20px 0 0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (max-width:700px){.recap{grid-template-columns:minmax(0,1fr)}}
+.recap li{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.12)}
+.recap b{display:block;font-family:var(--serif);font-size:16px;line-height:1.25}
+.recap .t{font-size:12.5px;color:#CFF3E5}
+.recap .btn{min-height:38px;padding:4px 12px;font-size:13px;background:transparent;color:#fff;border-color:rgba(255,255,255,.6)}
+.recap .btn:hover{background:#fff;color:var(--win)}
+.help{margin-top:16px;border:1px solid rgba(255,255,255,.5);border-radius:12px;padding:12px 14px;font-size:15px}
+
+/* Ventana de tarjeta */
+.overlay{position:fixed;inset:0;z-index:30;background:rgba(18,11,30,.82);overflow-y:auto;display:grid;place-items:start center;padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(24px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));animation:fadein .2s both}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+.modal{width:100%;max-width:560px;margin:auto 0}
+.xbar{display:flex;justify-content:flex-end;margin-bottom:8px}
+.xbar button{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:999px;padding:6px 14px;font-size:14px;font-weight:600;min-height:40px}
+.xbar button:hover{background:#fff;color:#2D1E47}
+.scene{perspective:1800px}
+.card{display:grid;position:relative;transform-style:preserve-3d;transition:transform .75s cubic-bezier(.2,.7,.2,1)}
+.card.flipped{transform:rotateY(180deg)}
+.card.noanim{transition:none}
+.face{grid-area:1/1;backface-visibility:hidden;-webkit-backface-visibility:hidden;border:1px solid var(--line);border-radius:18px;padding:22px 24px 20px;display:flex;flex-direction:column;gap:14px;min-height:440px;background:var(--surface);color:var(--ink);box-shadow:0 20px 50px -20px rgba(0,0,0,.7);position:relative}
+.face.back{transform:rotateY(180deg);background:var(--db)}
+.face[inert]{visibility:hidden;transition:visibility 0s .4s}
+.hit{position:absolute;inset:0;border:0;background:transparent;border-radius:18px;z-index:2;cursor:pointer}
+.hit:focus-visible{outline:3px solid var(--focus);outline-offset:-3px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.ico{width:60px;height:60px;border-radius:50%;background:var(--db);color:var(--dt);display:grid;place-items:center;flex:none}
+.back .ico{width:44px;height:44px;background:var(--surface)}
+.tag2{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;letter-spacing:.04em;padding:5px 10px;border-radius:999px;background:var(--db);color:var(--dt);border:1px solid var(--d)}
+.tag2 i{width:9px;height:9px;border-radius:50%;background:var(--d)}
+.kick{font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--dt);margin:6px 0 0}
+.q{font-family:var(--serif);font-weight:700;font-size:clamp(28px,4.4vw,36px);line-height:1.2;margin:0;text-wrap:balance}
+.cue{font-family:var(--serif);font-style:italic;font-size:19px;line-height:1.45;color:var(--muted);margin:0}
+.grow{flex:1}
+.tapcue{align-self:center;display:inline-flex;align-items:center;gap:9px;background:var(--brand);color:#fff;border-radius:999px;padding:10px 18px;font-size:14px;font-weight:600;animation:pulse 2.2s ease-out infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(45,30,71,.45)}70%{box-shadow:0 0 0 14px rgba(45,30,71,0)}100%{box-shadow:0 0 0 0 rgba(45,30,71,0)}}
+.foot{display:flex;justify-content:space-between;align-items:center;gap:12px;border-top:1px solid var(--line);padding-top:12px;font-size:12px;color:var(--muted)}
+.back .foot{border-color:rgba(30,22,48,.18)}
+.nodebadge{display:inline-grid;place-items:center;min-width:48px;height:48px;padding:0 6px;border-radius:50%;background:var(--d);border:3px solid #1E1630;color:#1E1630;font-size:12px;font-weight:700}
+.nodewrap{display:flex;align-items:center;gap:10px}
+.tabs{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px;gap:2px}
+.tabs button{border:0;background:transparent;border-radius:999px;padding:7px 14px;font-size:13px;font-weight:600;min-height:36px;color:var(--muted)}
+.tabs button[aria-selected="true"]{background:var(--ink);color:var(--bg)}
+.h2{font-family:var(--serif);font-weight:700;font-size:clamp(26px,4vw,32px);line-height:1.2;margin:0;text-wrap:balance}
+.body{font-family:var(--serif);font-size:20px;line-height:1.45;margin:0;text-wrap:pretty}
+.talk{background:var(--surface);border:1px solid var(--ink);border-radius:12px;padding:12px 14px}
+.talk small{display:block;font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--dt)}
+.talk p{font-family:var(--serif);font-style:italic;font-size:19px;line-height:1.35;margin:4px 0 0}
+.link{border:0;background:none;padding:0;text-decoration:underline;text-underline-offset:3px;font-weight:600;color:var(--dt);font-size:inherit}
+.data{display:grid;grid-template-columns:auto minmax(0,1fr);gap:16px;align-items:center}
+.waffle{display:grid;grid-template-columns:repeat(10,1fr);gap:3px;width:min(170px,38vw)}
+.waffle span{aspect-ratio:1;border-radius:2px;background:var(--line)}
+.waffle span.on{background:var(--d);animation:popc .35s both;animation-delay:calc(var(--i)*9ms)}
+@keyframes popc{from{transform:scale(.2);opacity:0}to{transform:scale(1);opacity:1}}
+.big{font-family:var(--serif);font-weight:700;font-size:46px;line-height:1;color:var(--dt)}
+.dl{display:grid;gap:10px;margin:0;font-size:14px}
+.dl>div{display:grid;grid-template-columns:96px minmax(0,1fr);gap:10px}
+.dl dt{color:var(--muted);font-weight:600}
+.dl dd{margin:0}
+.bars{display:grid;gap:6px;margin-top:2px}
+.bar2{display:grid;grid-template-columns:60px minmax(0,1fr);gap:8px;align-items:center;font-size:13px}
+.bar2 i{display:block;height:18px;border-radius:3px;position:relative;min-width:34px}
+.bar2 i b{position:absolute;right:6px;top:0;font-size:12px;line-height:18px;color:#fff;font-style:normal}
+.bridge{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:14px}
+
+.foot2{margin-top:34px;padding-block:20px 28px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted)}
+.foot2 p{margin:4px 0}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:999px;font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .2s;z-index:40}
+.toast.show{opacity:1}
+@media (prefers-reduced-motion:reduce){
+  .card{transition:none!important}
+  .net *,.waffle span.on,.tapcue,.btn.go,#heroNet .tw,.win,.conf,.guide i,.overlay{animation:none!important}
+}
+@media (max-width:520px){.face{padding:18px 16px 16px;min-height:470px}.data{grid-template-columns:minmax(0,1fr)}.dl>div{grid-template-columns:1fr;gap:2px}}
+</style>
+
+</head>
+<body>
+<div id="app">
+<!-- INICIO -->
+<div id="v-intro">
+  <header class="hero gut">
+    <svg id="heroNet" preserveAspectRatio="xMidYMid slice" aria-hidden="true"></svg>
+    <div class="wrap">
+            <h1 id="t-intro" tabindex="-1">Entre <em>líneas</em></h1>
+      <p class="tag">Lo que no se dice también conecta.</p>
+      <p class="sub">Detrás de cada creencia que justifica la violencia hay una red de otras creencias. Enciende seis nodos y aprende a leerla.</p>
+      <div class="heroact">
+        <button class="btn go" data-act="start" id="startBtn">Iniciar</button>
+      </div>
+    </div>
+  </header>
+  <main class="gut">
+    <div class="wrap">
+      <p class="lead">Los porcentajes dicen cuánto. La red muestra cómo se conectan.</p>
+      <div class="stats">
+        <div class="stat" data-dim="tol"><b>75.7 %</b><span>tolera alguna forma de violencia contra las mujeres</span></div>
+        <div class="stat" data-dim="cre"><b>87.4 %</b><span>aprueba alguna creencia sexista</span></div>
+        <div class="stat" data-dim="act"><b>71.3 %</b><span>aprueba alguna actitud sexista</span></div>
+      </div>
+      <ol class="how" aria-label="Cómo funciona">
+        <li><span class="n">1</span><b>Toca el nodo que late</b><span class="t">Cada nodo es una tarjeta con una pregunta para pensar.</span></li>
+        <li><span class="n">2</span><b>Descubre la respuesta</b><span class="t">Toca la tarjeta: gira y muestra otra forma de mirar, con datos de ENARES 2024.</span></li>
+        <li><span class="n">3</span><b>Enciende la red</b><span class="t">Con cada nodo se ilumina un tramo. Al llegar a seis, la red completa se ve.</span></li>
+      </ol>
+      <div class="cta2"><button class="btn go" data-act="start">Iniciar</button></div>
+    </div>
+  </main>
+</div>
+
+<!-- RED -->
+<div id="v-play" hidden>
+  <div class="topbar gut"><div class="wrap">
+    <button class="btn" data-act="home">Inicio</button>
+    <b>Entre líneas</b>
+    <span class="sp"></span>
+    <span class="prog" id="prog" aria-live="polite"></span>
+  </div></div>
+  <main class="gut">
+    <div class="wrap stagewrap">
+      <div class="netstage">
+        <div class="head"><h1 id="t-play" tabindex="-1">Enciende la red, un nodo a la vez</h1><p id="sub">Cada nodo es una creencia que se conecta con otras.</p></div>
+        <svg class="net" id="net" role="group" aria-label="Red de seis creencias"></svg>
+        <div class="guide" id="guide"></div>
+      </div>
+      <section class="win" id="win" hidden aria-live="polite"></section>
+    </div>
+  </main>
+</div>
+</div>
+
+<!-- Ventana de tarjeta -->
+<div class="overlay" id="overlay" hidden role="dialog" aria-modal="true" aria-label="Tarjeta">
+  <div class="modal">
+    <div class="xbar"><button data-act="close" id="xBtn">Cerrar</button></div>
+    <div class="scene"><div class="card" id="card"></div></div>
+  </div>
+</div>
+
+<footer class="foot2 gut"><div class="wrap">
+  <p><b>Uso.</b> Una tarjeta a la vez, de forma voluntaria y facilitada. No pidan testimonios personales ni fuercen confrontaciones.</p>
+  <p>Prototipo sin validar: falta revisión especializada, entrevistas cognitivas, adaptación sociocultural y pilotaje con protocolos de seguridad. Datos transversales: asociaciones, no causas. Índices departamentales orientativos (n = 235–856).</p>
+  <p><b>Fuente:</b> INEI, ENARES 2024, cuestionario CRS.02 (n = 8,955), ponderado; corrida preliminar del equipo. <b>Equipo:</b> Gabriela Berrocal Aragonés, Valeria Acosta Guerra y Alejandra Torres.</p>
+</div></footer>
+
+<div class="toast" id="toast" role="status"></div>
+<div class="sr" id="live" aria-live="polite"></div>
+
+<script>
+(function(){
+var DIMS={tol:'Tolerancia a la violencia',cre:'Creencias sexistas',act:'Actitudes sexistas'};
+var DIMC={tol:'#E69F00',cre:'#56B4E9',act:'#009E73'};
+var ICONS={
+ 1:'<path d="M6 10h22a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3H16l-6 5v-5H6a3 3 0 0 1-3-3V13a3 3 0 0 1 3-3z"/><path d="M34 20h8a3 3 0 0 1 3 3v11a3 3 0 0 1-3 3h-3v5l-6-5H24a3 3 0 0 1-3-3v-3"/>',
+ 2:'<circle cx="24" cy="7" r="2"/><path d="M24 9v29M14 40h20M10 15h28"/><path d="M10 15l-6 12a6 6 0 0 0 12 0z"/><path d="M38 15l-6 12a6 6 0 0 0 12 0z"/>',
+ 3:'<circle cx="18" cy="24" r="12"/><circle cx="30" cy="24" r="12"/>',
+ 4:'<circle cx="24" cy="24" r="18"/><circle cx="24" cy="24" r="12"/><path d="M24 17v14M28 20.5h-6a2.5 2.5 0 0 0 0 5h4a2.5 2.5 0 0 1 0 5h-6"/>',
+ 5:'<rect x="10" y="22" width="28" height="20" rx="3"/><path d="M16 22v-7a8 8 0 0 1 15-4"/><circle cx="24" cy="31" r="2.5"/><path d="M24 33.5v4"/>',
+ 6:'<path d="M6 22L24 7l18 15"/><path d="M10 19v22h28V19"/><path d="M24 36s-7-4.5-7-9.5a4 4 0 0 1 7-2.5 4 4 0 0 1 7 2.5C31 31.5 24 36 24 36z"/>'
+};
+var CARDS=[
+ {n:1,code:'PA12',dim:'act',kick:'¿Quién decide?',tema:'Autoridad masculina',
+  q:'¿Una sola persona debe tener siempre la última palabra en casa?',
+  cue:'Piensa en una decisión del hogar.',
+  title:'Decidir juntos fortalece.',
+  body:'Conversar y acordar no resta autoridad: construye confianza.',
+  talk:'¿Cómo se decide entre dos?',
+  pct:22.4,conn:[],terr:null,rural:null,note:null},
+ {n:2,code:'PA7',dim:'cre',kick:'Las mismas reglas',tema:'Doble estándar afectivo-sexual',
+  q:'¿Por qué se juzga distinto a mujeres y hombres por lo mismo?',
+  cue:'Imagina la misma situación con una mujer y con un hombre.',
+  title:'Mismas reglas para todas las personas.',
+  body:'Los dobles estándares alimentan la vergüenza y el control. El respeto no depende del género.',
+  talk:'¿Qué cambia si juzgamos igual?',
+  pct:3.6,conn:[{txt:'P15 · decirle «inútil» a la mujer',w:'0.17'}],
+  terr:'Más alta en Tumbes, La Libertad, Arequipa y Lima.',rural:null,
+  note:'Acuerdo menor a 5 %: conexiones menos estables.'},
+ {n:3,code:'PA4',dim:'cre',kick:'Amar no es obedecer',tema:'Obediencia conyugal',
+  q:'¿Amar significa obedecer, aunque no estés de acuerdo?',
+  cue:'Piensa en una discusión donde cada quien opina distinto.',
+  title:'Amar no es obedecer.',
+  body:'En pareja se puede opinar y disentir sin miedo. Los acuerdos sanos se hacen entre dos voces.',
+  talk:'¿Cómo disentir con respeto?',
+  pct:18.8,conn:[{txt:'P18 · si él trae el dinero, ella obedece',w:'0.19'},{txt:'PA14 · pedir permiso para salir',w:'0.15'}],
+  terr:null,rural:null,note:null},
+ {n:4,code:'P18',dim:'tol',kick:'El dinero no da autoridad',tema:'Aporte económico y control',
+  q:'«Yo pongo el dinero, yo decido». ¿Es justo?',
+  cue:'Piensa también en el cuidado y el trabajo del hogar.',
+  title:'El dinero no da autoridad.',
+  body:'Aportar no da derecho a controlar. Quitar el acceso al dinero para controlar es violencia económica (Ley N.° 30364).',
+  talk:'¿Cómo acordar el uso del dinero?',
+  pct:19.2,conn:[{txt:'PA4 · la buena esposa obedece',w:'0.19'}],
+  terr:'Más alta en Pasco, Puno y Junín.',
+  rural:{label:'Si él trae el dinero, ella obedece',u:15,r:47},note:null},
+ {n:5,code:'PA5',dim:'cre',kick:'Masculinidad sin control',tema:'Masculinidad y control',
+  q:'¿Controlar a la pareja demuestra ser «hombre de verdad»?',
+  cue:'Piensa en qué da seguridad en una relación.',
+  title:'La masculinidad no se mide por el control.',
+  body:'Vigilar o decidir por otra persona no es fortaleza. La confianza y el respeto, sí.',
+  talk:'¿Qué otras formas de ser hombre hay?',
+  pct:7.6,conn:[{txt:'PA13 · no denunciar por los hijos',w:'0.15'}],
+  terr:'Más alta en Loreto (×2.9) y Huancavelica (×2.5).',
+  rural:{label:'Controlar es ser «hombre de verdad»',u:5,r:23},note:null},
+ {n:6,code:'PA13',dim:'act',kick:'Acompañar sin juzgar',tema:'Búsqueda segura de apoyo',
+  q:'¿Por qué cuesta tanto pedir ayuda ante la violencia?',
+  cue:'Piensa en miedo, hijos, dependencia o vergüenza.',
+  title:'Pedir ayuda es válido.',
+  body:'Quien vive violencia no tiene la culpa. Escucha sin juzgar. Línea 100: gratuita, 24 horas.',
+  talk:'¿Cómo apoyar sin presionar?',
+  pct:7.1,conn:[{txt:'PA5 · controlar es ser «hombre de verdad»',w:'0.15'}],
+  terr:'Más alta en Ucayali (×2.9) y Huánuco (×2.7).',
+  rural:null,note:null}
+];
+var BRIDGE={3:{a:'PA4',b:'P18',w:'0.19',t:4},5:{a:'PA5',b:'PA13',w:'0.15',t:6}};
+var REAL=[[3,4,'0.19'],[5,6,'0.15']];
+var LAY={
+ wide:{w:800,h:520,r:30,fs:26,lit:175,pos:{1:[110,350],2:[240,170],3:[400,330],4:[530,150],5:[630,360],6:[720,200]},lab:{1:[0,62],2:[0,-48],3:[0,62],4:[0,-48],5:[0,62],6:[0,-48]},anchor:{1:'middle',2:'middle',3:'middle',4:'middle',5:'middle',6:'middle'}},
+ tall:{w:420,h:680,r:34,fs:30,lit:150,pos:{1:[86,92],2:[320,184],3:[96,300],4:[322,396],5:[96,504],6:[322,600]},lab:{1:[56,-4],2:[-56,-4],3:[56,-4],4:[-56,-4],5:[56,-4],6:[-56,-4]},anchor:{1:'start',2:'end',3:'start',4:'end',5:'start',6:'end'}}
+};
+var S={view:'intro',cur:0,flipped:false,tab:'m',done:{},won:false,fresh:-1,lastFocus:null};
+var $=function(id){return document.getElementById(id)};
+var mq=window.matchMedia('(max-width: 640px)');
+var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+function pad(n){return n<10?'0'+n:''+n}
+function fmt(p){return p.toFixed(1)}
+function icon(n,size,sw){return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="'+sw+'" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICONS[n]+'</svg>'}
+function say(t){$('live').textContent=t}
+var tt;function toast(t){var e=$('toast');e.textContent=t;e.classList.add('show');clearTimeout(tt);tt=setTimeout(function(){e.classList.remove('show')},1800)}
+function doneCount(){return Object.keys(S.done).length}
+function getL(){return mq.matches?LAY.tall:LAY.wide}
+function rng(seed){var s=seed;return function(){s=(s*16807)%2147483647;return s/2147483647}}
+
+/* Constelación del inicio */
+(function(){
+  var svg=$('heroNet');svg.setAttribute('viewBox','0 0 1200 700');
+  var r=rng(5),N=[],cols=['#E69F00','#56B4E9','#009E73','#FFFFFF'],i,j,out='';
+  for(i=0;i<70;i++)N.push({x:r()*1200,y:r()*700,c:cols[Math.floor(r()*4)],rad:2.5+r()*4.5,del:(r()*4).toFixed(2)});
+  for(i=0;i<N.length;i++){var d=[];for(j=0;j<N.length;j++)if(j!==i)d.push([Math.hypot(N[i].x-N[j].x,N[i].y-N[j].y),j]);d.sort(function(a,b){return a[0]-b[0]});
+    for(j=0;j<2;j++){var k=d[j][1];out+='<line x1="'+N[i].x.toFixed(0)+'" y1="'+N[i].y.toFixed(0)+'" x2="'+N[k].x.toFixed(0)+'" y2="'+N[k].y.toFixed(0)+'" stroke="#CFC6E0" stroke-opacity=".22" stroke-width="1.2"/>'}}
+  for(i=0;i<N.length;i++)out+='<circle class="tw" style="animation-delay:'+N[i].del+'s" cx="'+N[i].x.toFixed(0)+'" cy="'+N[i].y.toFixed(0)+'" r="'+N[i].rad.toFixed(1)+'" fill="'+N[i].c+'"/>';
+  svg.innerHTML=out;
+})();
+
+/* Red: fondo fantasma + seis nodos */
+var GH={};
+function ghostsFor(name){
+  if(GH[name])return GH[name];
+  var L=LAY[name],r=rng(11),G=[],tries=0,mains=[],labs=[],k;
+  for(k=1;k<=6;k++){var p=L.pos[k];mains.push(p);labs.push([p[0]+(L.anchor[k]==='middle'?0:(L.lab[k][0]>0?110:-110)),p[1]+(L.anchor[k]==='middle'?L.lab[k][1]:0)])}
+  while(G.length<34&&tries<5000){
+    tries++;var x=24+r()*(L.w-48),y=24+r()*(L.h-48),ok=true,i;
+    for(i=0;i<mains.length;i++)if(Math.hypot(x-mains[i][0],y-mains[i][1])<L.r+46){ok=false;break}
+    if(ok)for(i=0;i<labs.length;i++)if(Math.abs(x-labs[i][0])<(L.anchor[i+1]==='middle'?110:130)&&Math.abs(y-labs[i][1])<26){ok=false;break}
+    if(ok)for(i=0;i<G.length;i++)if(Math.hypot(x-G[i].x,y-G[i].y)<56){ok=false;break}
+    if(ok)G.push({x:x,y:y,d:['tol','cre','act'][Math.floor(r()*3)],rad:3.2+r()*3,del:(r()*4).toFixed(2)});
+  }
+  var E=[],seen={},i2,j2;
+  for(i2=0;i2<G.length;i2++){
+    var ds=[];
+    for(j2=0;j2<G.length;j2++)if(j2!==i2)ds.push([Math.hypot(G[i2].x-G[j2].x,G[i2].y-G[j2].y),'g'+j2]);
+    for(k=1;k<=6;k++)ds.push([Math.hypot(G[i2].x-L.pos[k][0],G[i2].y-L.pos[k][1]),'m'+k]);
+    ds.sort(function(a,b){return a[0]-b[0]});
+    for(j2=0;j2<2;j2++){var key=['g'+i2,ds[j2][1]].sort().join('-');if(!seen[key]){seen[key]=1;E.push(['g'+i2,ds[j2][1]])}}
+  }
+  GH[name]={G:G,E:E};return GH[name];
+}
+function renderNet(){
+  var name=mq.matches?'tall':'wide',L=LAY[name],GG=ghostsFor(name),G=GG.G,h='',i,k,dc=doneCount();
+  function pt(id){return id[0]==='g'?[G[+id.slice(1)].x,G[+id.slice(1)].y]:L.pos[+id.slice(1)]}
+  function lit(id){
+    if(S.won)return true;
+    if(id[0]==='m')return !!S.done[+id.slice(1)-1];
+    var p=pt(id);for(var q in S.done){var m=L.pos[+q+1];if(Math.hypot(p[0]-m[0],p[1]-m[1])<=L.lit)return true}return false;
+  }
+  $('net').setAttribute('viewBox','0 0 '+L.w+' '+L.h);
+  h+='<defs><filter id="glow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="4.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>';
+  GG.E.forEach(function(e){var a=pt(e[0]),b=pt(e[1]);h+='<line class="gedge'+(lit(e[0])&&lit(e[1])?' on':'')+'" x1="'+a[0].toFixed(1)+'" y1="'+a[1].toFixed(1)+'" x2="'+b[0].toFixed(1)+'" y2="'+b[1].toFixed(1)+'"/>'});
+  G.forEach(function(g,i){var on=lit('g'+i);h+='<circle class="ghost'+(on?'':' gtw')+'" style="animation-delay:'+g.del+'s" cx="'+g.x.toFixed(1)+'" cy="'+g.y.toFixed(1)+'" r="'+(on?g.rad+1.5:g.rad).toFixed(1)+'" fill="'+(on?DIMC[g.d]:'#FFFFFF')+'" fill-opacity="'+(on?.95:.35)+'"'+(on?' filter="url(#glow)"':'')+'/>'});
+  for(i=1;i<6;i++){
+    var a=L.pos[i],b=L.pos[i+1],d='M'+a[0]+' '+a[1]+' L'+b[0]+' '+b[1];
+    h+='<path class="dseg" d="'+d+'"/>';
+    if(S.done[i-1])h+='<path class="lit'+(S.fresh===i-1?' fresh':'')+'" pathLength="1" d="'+d+'"/>';
+  }
+  REAL.forEach(function(e){
+    var a=L.pos[e[0]],b=L.pos[e[1]],on=!!(S.done[e[0]-1]&&S.done[e[1]-1]),d='M'+a[0]+' '+a[1]+' L'+b[0]+' '+b[1];
+    h+='<path class="real'+(on?' on':'')+'" d="'+d+'"/>';
+    if(on){var mx=(a[0]+b[0])/2,my=(a[1]+b[1])/2;h+='<text class="wlabel" x="'+(mx+(mq.matches?-14:14))+'" y="'+(my-(mq.matches?0:12))+'" text-anchor="'+(mq.matches?'end':'start')+'">conexión '+e[2]+'</text>'}
+  });
+  for(k=0;k<6;k++){
+    var c=CARDS[k],p=L.pos[c.n],st=S.done[k]?'done':(k===dc?'act':'locked'),lb=L.lab[c.n],an=L.anchor[c.n];
+    var tl=(st==='locked')?'':' data-act="node" data-v="'+k+'" role="button" tabindex="0" aria-label="Tarjeta '+c.n+': '+c.kick+(st==='done'?', encendida':', toca para abrir')+'"';
+    h+='<g class="node '+st+(S.fresh===k?' fresh':'')+'"'+tl+(st==='locked'?' aria-hidden="true"':'')+'>';
+    h+='<circle class="halo" cx="'+p[0]+'" cy="'+p[1]+'" r="'+(L.r+12)+'" fill="'+DIMC[c.dim]+'"/>';
+    h+='<circle class="ring" cx="'+p[0]+'" cy="'+p[1]+'" r="'+(L.r+9)+'"/>';
+    if(S.fresh===k)h+='<circle class="burst" cx="'+p[0]+'" cy="'+p[1]+'" r="'+L.r+'"/>';
+    h+='<circle class="main" cx="'+p[0]+'" cy="'+p[1]+'" r="'+L.r+'" fill="'+DIMC[c.dim]+'"/>';
+    h+='<text class="num" x="'+p[0]+'" y="'+(p[1]+L.fs*.35)+'" text-anchor="middle" font-size="'+L.fs+'">'+c.n+'</text>';
+    var lx=p[0]+lb[0],ly=p[1]+lb[1];
+    h+='<text class="lbl" x="'+lx+'" y="'+ly+'" text-anchor="'+an+'">'+c.kick+'</text><text class="code" x="'+lx+'" y="'+(ly+16)+'" text-anchor="'+an+'">'+c.code+' · '+c.tema+'</text>';
+    if(st==='done')h+='<circle cx="'+(p[0]+L.r*.78)+'" cy="'+(p[1]-L.r*.78)+'" r="10" fill="#fff" stroke="#006B4F" stroke-width="2"/><path d="M'+(p[0]+L.r*.78-4.5)+' '+(p[1]-L.r*.78)+'l3.2 3.2 5.6-6.2" fill="none" stroke="#006B4F" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>';
+    h+='</g>';
+  }
+  $('net').innerHTML=h;
+  /* progreso y guía */
+  var pg='';for(i=0;i<6;i++)pg+='<i class="'+(S.done[i]?'on':'')+'"></i>';
+  $('prog').innerHTML=pg+'<span>'+dc+' de 6</span>';
+  var g=$('guide');
+  if(S.won){g.innerHTML='<span>La red está completa. Toca cualquier nodo para repasarlo.</span>'}
+  else{g.innerHTML='<i></i><span>'+(dc===0?'Toca el nodo que late para empezar.':'Bien. Ahora toca el siguiente nodo que late.')+'</span>'}
+}
+
+/* Tarjeta */
+function waffle(p){
+  var on=Math.round(p),h='<div class="waffle" role="img" aria-label="'+fmt(p)+' de cada 100 personas">';
+  for(var i=0;i<100;i++)h+='<span'+(i<on?' class="on" style="--i:'+i+'"':'')+'></span>';
+  return h+'</div>';
+}
+function frontHTML(c){
+  return '<div class="face front" data-dim="'+c.dim+'" id="front"'+(S.flipped?' inert aria-hidden="true"':'')+'>'+
+   '<button class="hit" data-act="flip" id="hitBtn" aria-label="Voltear la tarjeta para ver la respuesta. '+c.q.replace(/"/g,'')+'"></button>'+
+   '<div class="top"><span class="ico">'+icon(c.n,36,1.7)+'</span><span class="tag2"><i></i>'+DIMS[c.dim]+'</span></div>'+
+   '<p class="kick">Nodo '+pad(c.n)+' / 06 · '+c.kick+'</p>'+
+   '<h2 class="q">'+c.q+'</h2>'+
+   '<p class="cue">'+c.cue+'</p>'+
+   '<div class="grow"></div>'+
+   '<span class="tapcue"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.5-5.8"/><path d="M20 4v5h-5"/></svg>Toca la tarjeta para ver la respuesta</span>'+
+   
+  '</div>';
+}
+function backHTML(c){
+  var h='<div class="face back" data-dim="'+c.dim+'" id="back"'+(S.flipped?'':' inert aria-hidden="true"')+'>';
+  h+='<div class="top"><span class="ico">'+icon(c.n,28,1.8)+'</span></div>';
+  {
+    h+='<h2 class="h2">'+c.title+'</h2><p class="body">'+c.body+'</p>'+
+       '<div class="talk"><small>Para conversar</small><p>'+c.talk+'</p></div>';
+    var br=BRIDGE[c.n];
+    
+    
+  }
+  var lastNew=(doneCount()===6&&!S.won);
+  h+='<div class="grow"></div><button class="btn primary" data-act="close" id="contBtn">'+(lastNew?'Ver la red completa':'Volver a la red')+'</button>';
+  h+='<div class="foot"><span class="nodewrap"><span class="nodebadge">'+c.code+'</span><span>'+c.tema+'<br>ENARES 2024 · preliminar</span></span><button class="link" data-act="flip" style="color:var(--ink)">Ver pregunta</button></div></div>';
+  return h;
+}
+function renderCard(){
+  var c=CARDS[S.cur];
+  $('card').classList.toggle('flipped',S.flipped);
+  $('card').innerHTML=frontHTML(c)+backHTML(c);
+}
+function trapTab(e){
+  if(e.key!=='Tab')return;
+  var f=[].slice.call($('overlay').querySelectorAll('button')).filter(function(b){return !b.closest('[inert]')&&b.offsetParent!==null});
+  if(!f.length)return;
+  var first=f[0],last=f[f.length-1];
+  if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}
+  else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}
+}
+function openCard(k){
+  S.lastFocus=document.activeElement;
+  S.cur=k;S.flipped=!!S.done[k];S.tab='m';
+  renderCard();
+  $('overlay').hidden=false;$('v-play').inert=true;document.body.style.overflow='hidden';
+  $('overlay').scrollTop=0;
+  var f=S.flipped?$('contBtn'):$('hitBtn');if(f)f.focus();
+  say('Tarjeta '+(k+1)+': '+CARDS[k].kick);
+}
+function closeCard(){
+  $('overlay').hidden=true;$('v-play').inert=false;document.body.style.overflow='';
+  var k=S.cur,wasFresh=S.fresh;
+  renderNet();
+  if(doneCount()===6&&!S.won){S.won=true;S.fresh=-1;renderNet();renderWin();var w=$('win');if(w&&w.scrollIntoView)w.scrollIntoView({behavior:reduce?'auto':'smooth',block:'center'})}
+  else{var el=document.querySelector('#net [data-v="'+k+'"]')||document.querySelector('#net [data-act="node"].act');if(el)el.focus()}
+}
+function flip(){
+  S.flipped=!S.flipped;
+  if(S.flipped){
+    S.tab='m';
+    if(!S.done[S.cur]){S.done[S.cur]=1;S.fresh=S.cur}
+  }
+  renderCard();
+  var f=S.flipped?$('contBtn'):$('hitBtn');if(f)f.focus();
+  say(S.flipped?'Respuesta: '+CARDS[S.cur].title:'Pregunta');
+}
+
+/* Cierre */
+function confetti(w){
+  if(reduce)return;
+  var cols=['#E69F00','#56B4E9','#FFFFFF','#BDF2DE'],h='';
+  for(var i=0;i<46;i++)h+='<span class="conf" style="left:'+(Math.random()*100).toFixed(1)+'%;background:'+cols[i%4]+';animation-delay:'+(Math.random()*.9).toFixed(2)+'s"></span>';
+  var d=document.createElement('div');d.innerHTML=h;while(d.firstChild)w.appendChild(d.firstChild);
+}
+function renderWin(){
+  var w=$('win'),h='<p class="eyebrow">Red completa · seis nodos encendidos</p><h2>¡Felicidades!</h2><p class="line">Ahora sabemos leer entre líneas.</p>'+
+   '<p class="sup">Una creencia rara vez está sola: se conecta con otras. Ya sabes dónde mirar, y cómo conversarlas sin culpar a nadie.</p><ul class="recap">';
+  CARDS.forEach(function(c,k){h+='<li data-dim="'+c.dim+'"><span class="nodebadge">'+c.code+'</span><div><b>'+c.title+'</b><span class="t">'+pad(c.n)+' · '+c.tema+'</span></div><button class="btn" data-act="node" data-v="'+k+'">Repasar</button></li>'});
+  h+='</ul><div class="help"><b>Si surge una revelación de violencia:</b> escucha sin juzgar y deriva a la Línea 100, gratuita y disponible las 24 horas.</div>'+
+     '<div class="cta"><button class="btn" data-act="restart">Empezar de nuevo</button><button class="btn ghost" data-act="home">Volver al inicio</button></div>';
+  w.innerHTML=h;w.hidden=false;confetti(w);
+  say('Felicidades. Ahora sabemos leer entre líneas.');
+}
+
+/* Vistas */
+function show(v){
+  S.view=v;
+  $('v-intro').hidden=(v!=='intro');$('v-play').hidden=(v!=='play');
+  window.scrollTo(0,0);
+  if(v==='play'){
+    renderNet();
+    var w=$('win');if(S.won)renderWin();else{w.hidden=true;w.innerHTML=''}
+    $('t-play').focus({preventScroll:true});
+  }else{$('t-intro').focus({preventScroll:true})}
+}
+function copyMsg(){
+  var c=CARDS[S.cur],t=c.title+'\n'+c.body+'\nPara conversar: '+c.talk+'\n(Entre líneas · basado en ENARES 2024 · prototipo sujeto a validación)';
+  function ok(){toast('Mensaje copiado')}
+  function fail(){toast('No se pudo copiar. Selecciona el texto manualmente.')}
+  try{navigator.clipboard.writeText(t).then(ok,fail)}catch(e){fail()}
+}
+document.addEventListener('click',function(e){
+  var b=e.target.closest('[data-act]');
+  if(!b){if(e.target===$('overlay'))closeCard();return}
+  var a=b.getAttribute('data-act'),v=b.getAttribute('data-v');
+  if(a==='start')show('play');
+  else if(a==='home')show('intro');
+  else if(a==='node'){var k=+v;if(S.view==='play'&&(S.done[k]||k===doneCount()))openCard(k)}
+  else if(a==='flip')flip();
+  else if(a==='close')closeCard();
+  else if(a==='tab'){S.tab=v;renderCard();var t=$('tab-'+v);if(t)t.focus()}
+  else if(a==='copy')copyMsg();
+  else if(a==='restart'){S.done={};S.won=false;S.fresh=-1;show('play')}
+});
+document.addEventListener('keydown',function(e){
+  var t=e.target;
+  if(!$('overlay').hidden){
+    if(e.key==='Escape'){e.preventDefault();closeCard()}
+    else trapTab(e);
+    return;
+  }
+  if((e.key==='Enter'||e.key===' ')&&t&&t.getAttribute&&t.getAttribute('data-act')==='node'&&t.tagName==='g'){e.preventDefault();var k=+t.getAttribute('data-v');if(S.done[k]||k===doneCount())openCard(k)}
+});
+var onMq=function(){if(S.view==='play')renderNet()};
+if(mq.addEventListener)mq.addEventListener('change',onMq);else if(mq.addListener)mq.addListener(onMq);
+show('intro');
+})();
+</script>
+</body>
+</html>
